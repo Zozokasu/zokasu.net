@@ -3,7 +3,6 @@
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "zokasu-net",
 	"assets": {
-		"directory": "./dist",
-		"binding": "ASSETS"
+		"directory": "./dist"
 	}
 }
