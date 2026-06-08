@@ -37,8 +37,6 @@ export default defineConfig({
 	],
 
   adapter: cloudflare({
-    sessionKVBindingName: 'SESSIONS',
     imageService: 'compile',
-    imagesBindingName: 'IMAGES',
   }),
 });
