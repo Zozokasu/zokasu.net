@@ -17,4 +17,17 @@ const blog = defineCollection({
 		}),
 });
 
-export const collections = { blog };
+const vrsns = defineCollection({
+	loader: glob({ base: './src/content/vrsns', pattern: '**/*.{md,mdx}' }),
+	schema: ({ image }) =>
+		z.object({
+			title: z.string(),
+			description: z.string(),
+			pubDate: z.coerce.date(),
+			updatedDate: z.coerce.date().optional(),
+			heroImage: z.optional(image()),
+			category: z.enum(['Resonite-Tech', 'Resonite-Life', 'VRChat', 'Other']).optional(),
+		}),
+});
+
+export const collections = { blog, vrsns };
