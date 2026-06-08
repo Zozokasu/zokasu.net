@@ -11,9 +11,12 @@
 		{
 			"binding": "SESSION",
 			"id": "054c3b64f7a34b5284238fa30e31b5c6"
-		 }
+		}
 	],
 	"observability": {
 		"enabled": true
+	},
+	"images": {
+		"binding": "IMAGES"
 	}
 }
