@@ -5,10 +5,17 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<'blog'>['data'] & {
+	headings?: {
+		depth: number;
+		slug: string;
+		text: string;
+	}[];
+};
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, headings = [] } = Astro.props;
 ---
 
 <html lang="en">
@@ -36,6 +43,28 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 				padding: 1em;
 				color: rgb(var(--gray-dark));
 			}
+			.post-shell {
+				box-sizing: border-box;
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) minmax(0, 720px) minmax(220px, 260px);
+				gap: 2rem;
+				width: min(100%, 1180px);
+				margin: 0 auto;
+				padding: 0 1em;
+				align-items: start;
+			}
+			.post-shell .prose {
+				box-sizing: border-box;
+				grid-column: 2;
+				width: 100%;
+				max-width: 100%;
+				margin: 0;
+				padding: 1em 0;
+			}
+			.post-shell :global(.toc) {
+				grid-column: 3;
+				margin-top: 1em;
+			}
 			.title {
 				margin-bottom: 1em;
 				padding: 1em 0;
@@ -52,6 +81,20 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			.last-updated-on {
 				font-style: italic;
 			}
+			@media (max-width: 1080px) {
+				.post-shell {
+					display: block;
+					width: 720px;
+					max-width: calc(100% - 2em);
+					padding: 0;
+				}
+				.post-shell .prose {
+					width: 100%;
+					max-width: 100%;
+					margin: auto;
+					padding: 1em;
+				}
+			}
 		</style>
 	</head>
 
@@ -62,22 +105,25 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 				<div class="hero-image">
 					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
 				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
+				<div class="post-shell">
+					<div class="prose">
+						<div class="title">
+							<div class="date">
+								<FormattedDate date={pubDate} />
+								{
+									updatedDate && (
+										<div class="last-updated-on">
+											Last updated on <FormattedDate date={updatedDate} />
+										</div>
+									)
+								}
+							</div>
+							<h1>{title}</h1>
+							<hr />
 						</div>
-						<h1>{title}</h1>
-						<hr />
+						<slot />
 					</div>
-					<slot />
+					<TableOfContents headings={headings} variant="blog" />
 				</div>
 			</article>
 		</main>

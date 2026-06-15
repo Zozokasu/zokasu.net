@@ -1,0 +1,181 @@
+---
+type Heading = {
+	depth: number;
+	slug: string;
+	text: string;
+};
+
+type Props = {
+	headings?: Heading[];
+	variant?: 'blog' | 'vrsns';
+};
+
+const { headings = [], variant = 'blog' } = Astro.props;
+const tocHeadings = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+
+{
+	tocHeadings.length > 0 && (
+		<aside class="toc" data-variant={variant} aria-label="Table of contents">
+			<nav>
+				<h2>目次</h2>
+				<ol>
+					{tocHeadings.map((heading) => (
+						<li class={`depth-${heading.depth}`}>
+							<a href={`#${heading.slug}`} data-toc-link={heading.slug}>
+								{heading.text}
+							</a>
+						</li>
+					))}
+				</ol>
+			</nav>
+		</aside>
+	)
+}
+
+<script>
+	const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+
+	if (tocLinks.length > 0) {
+		const linksById = new Map(tocLinks.map((link) => [link.dataset.tocLink, link]));
+		const headings = tocLinks
+			.map((link) => document.getElementById(link.dataset.tocLink ?? ''))
+			.filter((heading): heading is HTMLElement => Boolean(heading));
+		let activeId = '';
+		let ticking = false;
+
+		const setActiveLink = (id: string) => {
+			if (!id || activeId === id) return;
+			activeId = id;
+
+			tocLinks.forEach((link) => {
+				const isActive = link.dataset.tocLink === id;
+				link.classList.toggle('is-active', isActive);
+
+				if (isActive) {
+					link.setAttribute('aria-current', 'true');
+				} else {
+					link.removeAttribute('aria-current');
+				}
+			});
+		};
+
+		const updateActiveHeading = () => {
+			ticking = false;
+
+			const currentHeading =
+				headings
+					.filter((heading) => heading.getBoundingClientRect().top <= 140)
+					.at(-1) ?? headings.find((heading) => heading.getBoundingClientRect().top > 140);
+
+			if (currentHeading) {
+				setActiveLink(currentHeading.id);
+			}
+		};
+
+		const requestUpdate = () => {
+			if (ticking) return;
+			ticking = true;
+			window.requestAnimationFrame(updateActiveHeading);
+		};
+
+		const observer = new IntersectionObserver(requestUpdate, {
+			rootMargin: '-96px 0px -70% 0px',
+			threshold: [0, 1],
+		});
+
+		headings.forEach((heading) => observer.observe(heading));
+		window.addEventListener('scroll', requestUpdate, { passive: true });
+		window.addEventListener('resize', requestUpdate);
+
+		const initialId = decodeURIComponent(window.location.hash.replace('#', ''));
+		if (initialId && linksById.has(initialId)) {
+			setActiveLink(initialId);
+		} else {
+			updateActiveHeading();
+		}
+	}
+
+	// .title の下端より上に aside が来ないようにする
+	const toc = document.querySelector<HTMLElement>('aside.toc');
+	const titleEl = document.querySelector<HTMLElement>('.prose .title');
+	if (toc && titleEl) {
+		const alignToc = () => {
+			const shellTop = (toc.parentElement as HTMLElement).getBoundingClientRect().top + window.scrollY;
+			const titleBottom = titleEl.getBoundingClientRect().bottom + window.scrollY;
+			toc.style.marginTop = Math.max(0, titleBottom - shellTop) + 'px';
+		};
+		new ResizeObserver(alignToc).observe(titleEl);
+		window.addEventListener('load', alignToc);
+		alignToc();
+	}
+</script>
+
+<style>
+	.toc {
+		box-sizing: border-box;
+		align-self: start;
+		position: sticky;
+		top: 6rem;
+		max-height: calc(100vh - 8rem);
+		overflow: auto;
+		padding: 0.25rem 0 0.25rem 1rem;
+		border-left: 1px solid rgb(var(--gray-light));
+		font-size: 0.78rem;
+		line-height: 1.45;
+	}
+
+	.toc h2 {
+		margin: 0 0 0.75rem;
+		color: rgb(var(--gray));
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0;
+	}
+
+	.toc ol {
+		display: grid;
+		gap: 0.15rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.toc li {
+		margin: 0;
+	}
+
+	.toc li.depth-3 {
+		padding-left: 0.9rem;
+	}
+
+	.toc a {
+		display: block;
+		padding: 0.25rem 0;
+		color: rgb(var(--gray));
+		text-decoration: none;
+		transition:
+			color 120ms ease,
+			border-color 120ms ease;
+	}
+
+	.toc a:hover,
+	.toc a.is-active {
+		color: var(--accent);
+	}
+
+	.toc a.is-active {
+		font-weight: 700;
+	}
+
+	.toc[data-variant='vrsns'] a:hover,
+	.toc[data-variant='vrsns'] a.is-active {
+		color: #1c6ea1;
+	}
+
+	@media (max-width: 1080px) {
+		.toc {
+			display: none;
+		}
+	}
+</style>
