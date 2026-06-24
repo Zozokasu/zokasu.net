@@ -13,7 +13,7 @@ const blog = defineCollection({
 			// Transform string to Date object
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
-			heroImage: z.optional(image()),
+			heroImage: z.preprocess((value) => (value === '' ? undefined : value), image().optional()),
 		}),
 });
 
@@ -25,7 +25,7 @@ const vrsns = defineCollection({
 			description: z.string(),
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
-			heroImage: z.optional(image()),
+			heroImage: z.preprocess((value) => (value === '' ? undefined : value), image().optional()),
 			category: z.enum(['Resonite-Tech', 'Resonite-Life', 'VRChat', 'Other']).optional(),
 		}),
 });
