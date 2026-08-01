@@ -1,24 +1,451 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import ZokasuFaceIcon from '../assets/ZokasuFaceIcon.png';
+import ExploreHub from '../components/ExploreHub.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import {
+	CURRENT_ACTIVITIES,
+	DISPLAY_NAME,
+	DRAWERS,
+	EXTERNAL_LINKS,
+	INDEX_DESCRIPTION,
+	isExternalHref,
+	ONE_LINER,
+	ONE_LINER_SUB,
+	SUBTITLES,
+	WORKS,
+} from '../data/profile';
+import Page from '../layouts/Page.astro';
+
+const latestPosts = (await getCollection('vrsns'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3);
+
+const featuredWorks = WORKS.filter((work) => work.featured);
+const smallWorks = WORKS.filter((work) => !work.featured);
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>ぞかすサイト</h1>
-			<p>
-				まるで机の上みたいな構成のウェブサイト
-			</p>
+<Page title={DISPLAY_NAME} description={INDEX_DESCRIPTION} ogImagePath="/og/index.png" wide>
+	<div class="landing">
+		<section class="hero">
+			<div class="hero-copy">
+				<h1>{DISPLAY_NAME}</h1>
+				<ul class="subtitles">
+					{SUBTITLES.map((subtitle) => <li>{subtitle}</li>)}
+				</ul>
+				<p class="one-liner">{ONE_LINER}</p>
+				<p class="one-liner-sub">{ONE_LINER_SUB}</p>
+				<ul class="hero-links" aria-label="外部の公開場所">
+					{
+						EXTERNAL_LINKS.map((link) => (
+							<li>
+								<a href={link.href} target="_blank" rel="noopener noreferrer">
+									{link.label}
+									<span aria-hidden="true">↗</span>
+									<span class="sr-only">（外部サイト・新しいタブで開きます）</span>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+			<Image src={ZokasuFaceIcon} alt="ぞぞかすの顔アイコン" width={220} class="hero-icon" />
+		</section>
 
-		</main>
-		<Footer />
-	</body>
-</html>
+		<section class="block">
+			<h2>最近の活動</h2>
+			<ul class="activities">
+				{CURRENT_ACTIVITIES.map((activity) => <li>{activity}</li>)}
+			</ul>
+		</section>
+
+		<section class="block">
+			<h2>主な制作物</h2>
+			<div class="featured-grid">
+				{
+					featuredWorks.map((work) => (
+						<article class="card">
+							<p class="tags">{work.tags.join(' / ')}</p>
+							<h3>{work.title}</h3>
+							<p class="summary">{work.summary}</p>
+							<ul class="highlights">
+								{work.highlights.map((highlight) => (
+									<li>{highlight}</li>
+								))}
+							</ul>
+							{work.links.length > 0 && (
+								<ul class="card-links">
+									{work.links.map((link) => (
+										<li>
+											<a href={link.href} target="_blank" rel="noopener noreferrer">
+												{link.label}
+												<span aria-hidden="true">↗</span>
+												<span class="sr-only">（外部サイト・新しいタブで開きます）</span>
+											</a>
+										</li>
+									))}
+								</ul>
+							)}
+						</article>
+					))
+				}
+			</div>
+			<div class="small-grid">
+				{
+					smallWorks.map((work) => (
+						<article class="card">
+							<p class="tags">{work.tags.join(' / ')}</p>
+							<h3>{work.title}</h3>
+							<p class="summary">{work.summary}</p>
+							{work.links.length > 0 && (
+								<ul class="card-links">
+									{work.links.map((link) => (
+										<li>
+											<a href={link.href} target="_blank" rel="noopener noreferrer">
+												{link.label}
+												<span aria-hidden="true">↗</span>
+												<span class="sr-only">（外部サイト・新しいタブで開きます）</span>
+											</a>
+										</li>
+									))}
+								</ul>
+							)}
+						</article>
+					))
+				}
+			</div>
+		</section>
+
+		<section class="block">
+			<h2>その他</h2>
+			<p class="block-lead">
+				気になったところから開けてみてください。サイトの中の記事にも、外に置いてあるものにもつながっています。
+			</p>
+			<div class="drawer-grid">
+				{
+					DRAWERS.map((drawer) => {
+						return (
+							<article class="card">
+								<h3>{drawer.label}</h3>
+								<p class="summary">{drawer.description}</p>
+								<a class="drawer-primary" href={drawer.internal.href}>
+									{drawer.internal.label}
+									<span aria-hidden="true">→</span>
+								</a>
+								{drawer.external.length > 0 && (
+									<ul class="card-links" aria-label={`${drawer.label}の外部リンク`}>
+										{drawer.external.map((link) => {
+											const leavesSite = isExternalHref(link.href);
+											return (
+												<li>
+													<a
+														href={link.href}
+														target={leavesSite ? '_blank' : undefined}
+														rel={leavesSite ? 'noopener noreferrer' : undefined}
+													>
+														{link.label}
+														<span aria-hidden="true">{leavesSite ? '↗' : '→'}</span>
+														{leavesSite && (
+															<span class="sr-only">（外部サイト・新しいタブで開きます）</span>
+														)}
+													</a>
+												</li>
+											);
+										})}
+									</ul>
+								)}
+							</article>
+						);
+					})
+				}
+			</div>
+		</section>
+
+		<section class="block">
+			<h2>最新の記事</h2>
+			<ul class="posts">
+				{
+					latestPosts.map((post) => (
+						<li>
+							<a href={`/vrsns/${post.id}/`}>
+								<span class="post-title">{post.data.title}</span>
+								<span class="post-description">{post.data.description}</span>
+								<span class="post-date">
+									<FormattedDate date={post.data.pubDate} />
+								</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+			<p class="more">
+				<a href="/vrsns/">VRSNSの記事をすべて見る →</a>
+			</p>
+		</section>
+
+		<ExploreHub
+			title="More About Me"
+			lead="ここから先は、プロフィールの詳細と、外に置いてある制作物へ続いています。"
+		/>
+	</div>
+</Page>
+
+<style>
+	.landing {
+		--accent-teal: #0a6e70;
+	}
+
+	.hero {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 2.5rem;
+		align-items: center;
+		padding-bottom: 1rem;
+	}
+
+	.hero h1 {
+		margin-bottom: 0.6rem;
+		font-size: clamp(2.2rem, 6vw, 3rem);
+	}
+
+	.subtitles {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 0 0 1.2rem;
+		padding: 0;
+		list-style: none;
+	}
+
+	.subtitles li {
+		padding: 0.15rem 0.7rem;
+		border-radius: 999px;
+		background: rgba(10, 110, 112, 8%);
+		color: var(--accent-teal);
+		font-size: 0.8rem;
+		font-weight: 700;
+	}
+
+	.one-liner {
+		margin-bottom: 0.4rem;
+		font-size: 1.15rem;
+		line-height: 1.75;
+	}
+
+	.one-liner-sub {
+		margin-bottom: 1.4rem;
+		color: rgb(var(--gray));
+		font-size: 0.95rem;
+		line-height: 1.75;
+	}
+
+	.hero-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.1rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: 0.9rem;
+	}
+
+	.hero-icon {
+		width: min(220px, 30vw);
+		height: auto;
+		border-radius: 50%;
+	}
+
+	.block {
+		padding-top: 3rem;
+	}
+
+	.block h2 {
+		font-size: 1.953em;
+	}
+
+	.block-lead {
+		margin-bottom: 1.5rem;
+		color: rgb(var(--gray));
+		font-size: 0.9rem;
+		line-height: 1.7;
+	}
+
+	.activities {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 0.5rem 1.5rem;
+		margin: 0;
+		padding-left: 1.2em;
+	}
+
+	.activities li {
+		line-height: 1.8;
+	}
+
+	.featured-grid,
+	.small-grid,
+	.drawer-grid {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.featured-grid {
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	}
+
+	.small-grid {
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		margin-top: 1rem;
+	}
+
+	.drawer-grid {
+		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	}
+
+	.card {
+		display: flex;
+		flex-direction: column;
+		padding: 1.25rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 12px;
+		background: #fff;
+	}
+
+	.card h3 {
+		margin-bottom: 0.4rem;
+		font-size: 1.25em;
+	}
+
+	.tags {
+		margin: 0 0 0.3rem;
+		color: var(--accent-teal);
+		font-size: 0.75rem;
+		font-weight: 700;
+	}
+
+	.summary {
+		margin-bottom: 0.8rem;
+		font-size: 0.95rem;
+		line-height: 1.7;
+	}
+
+	.highlights {
+		margin: 0 0 0.8rem;
+		padding-left: 1.2em;
+		color: rgb(var(--gray-dark));
+		font-size: 0.85rem;
+		line-height: 1.8;
+	}
+
+	.card-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1rem;
+		margin: auto 0 0;
+		padding: 0;
+		list-style: none;
+		font-size: 0.85rem;
+	}
+
+	.drawer-primary {
+		align-self: flex-start;
+		margin-bottom: 0.7rem;
+		font-size: 0.9rem;
+		font-weight: 700;
+	}
+
+	.posts {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		border-top: 1px solid rgb(var(--gray-light));
+	}
+
+	.posts li {
+		border-bottom: 1px solid rgb(var(--gray-light));
+	}
+
+	.posts a {
+		display: block;
+		padding: 1rem 0.25rem;
+		color: rgb(var(--gray-dark));
+		text-decoration: none;
+	}
+
+	.post-title {
+		display: block;
+		color: rgb(var(--black));
+		font-size: 1.05rem;
+		font-weight: 700;
+		line-height: 1.5;
+	}
+
+	.post-description {
+		display: block;
+		margin-top: 0.2rem;
+		font-size: 0.9rem;
+		line-height: 1.6;
+	}
+
+	.post-date {
+		display: block;
+		margin-top: 0.3rem;
+		color: rgb(var(--gray));
+		font-size: 0.8rem;
+	}
+
+	.posts a:hover .post-title {
+		color: var(--accent);
+	}
+
+	.more {
+		margin-top: 1rem;
+		font-size: 0.9rem;
+	}
+
+	a:focus-visible {
+		outline: 3px solid var(--accent-teal);
+		outline-offset: 3px;
+	}
+
+	@media (hover: hover) {
+		.card {
+			transition:
+				border-color 160ms ease,
+				transform 160ms ease;
+		}
+
+		.card:hover {
+			border-color: var(--accent-teal);
+			transform: translateY(-2px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.card {
+			transition: none;
+		}
+
+		.card:hover {
+			transform: none;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.hero {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 1.5rem;
+			justify-items: start;
+		}
+
+		.hero-icon {
+			width: 140px;
+			order: -1;
+		}
+
+		.block {
+			padding-top: 2.25rem;
+		}
+	}
+</style>

@@ -4,5 +4,11 @@
 	"name": "zokasu-net",
 	"assets": {
 		"directory": "./dist"
-	}
+	},
+	"routes": [
+		{
+			"pattern": "zokasu.net",
+			"custom_domain": true
+		}
+	]
 }

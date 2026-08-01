@@ -1,0 +1,170 @@
+---
+import { EXTERNAL_LINKS, isExternalHref, SITE_SECTIONS, type LinkTarget } from '../data/profile';
+
+interface Props {
+	title?: string;
+	lead?: string;
+	internal?: LinkTarget[];
+	external?: LinkTarget[];
+}
+
+const {
+	title = 'More About Me',
+	lead = 'ぞぞかすに関するあれこれ',
+	internal = SITE_SECTIONS,
+	external = EXTERNAL_LINKS,
+} = Astro.props;
+
+const groups = [
+	{ label: 'コンテンツ', items: internal },
+	{ label: 'その他', items: external },
+].filter((group) => group.items.length > 0);
+---
+
+<nav class="explore" aria-label={title}>
+	<h2>{title}</h2>
+	<p class="lead">{lead}</p>
+
+	{
+		groups.map((group) => (
+			<div class="group">
+				<p class="group-label">{group.label}</p>
+				<ul aria-label={`${group.label}の行き先`}>
+					{group.items.map((item) => {
+						const leavesSite = isExternalHref(item.href);
+						return (
+							<li>
+								<a
+									href={item.href}
+									target={leavesSite ? '_blank' : undefined}
+									rel={leavesSite ? 'noopener noreferrer' : undefined}
+								>
+									<span class="label">
+										{item.label}
+										<span class="marker" aria-hidden="true">
+											{leavesSite ? '↗' : '→'}
+										</span>
+										{leavesSite && (
+											<span class="sr-only">（外部サイト・新しいタブで開きます）</span>
+										)}
+									</span>
+									{item.note && <span class="note">{item.note}</span>}
+								</a>
+							</li>
+						);
+					})}
+				</ul>
+			</div>
+		))
+	}
+</nav>
+
+<style>
+	.explore {
+		--accent-teal: #0a6e70;
+		margin: 4rem 0 1rem;
+		padding: 1.75rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 12px;
+		background: #fff;
+	}
+
+	.explore h2 {
+		font-size: 1.563em;
+	}
+
+	.lead {
+		margin: 0 0 1.5rem;
+		color: rgb(var(--gray));
+		font-size: 0.9rem;
+		line-height: 1.7;
+	}
+
+	.group + .group {
+		margin-top: 1.5rem;
+	}
+
+	.group-label {
+		margin: 0 0 0.6rem;
+		color: var(--accent-teal);
+		font-size: 0.8rem;
+		font-weight: 700;
+	}
+
+	ul {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+		gap: 0.75rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	li a {
+		display: block;
+		height: 100%;
+		box-sizing: border-box;
+		padding: 0.8rem 0.9rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+		color: rgb(var(--gray-dark));
+		text-decoration: none;
+	}
+
+	.label {
+		display: block;
+		font-weight: 700;
+		line-height: 1.4;
+	}
+
+	.marker {
+		margin-left: 0.35em;
+		color: var(--accent-teal);
+	}
+
+	.note {
+		display: block;
+		margin-top: 0.2rem;
+		color: rgb(var(--gray));
+		font-size: 0.8rem;
+		line-height: 1.6;
+	}
+
+	li a:hover {
+		border-color: var(--accent-teal);
+		color: rgb(var(--black));
+	}
+
+	li a:focus-visible {
+		outline: 3px solid var(--accent-teal);
+		outline-offset: 3px;
+	}
+
+	@media (hover: hover) {
+		li a {
+			transition:
+				border-color 160ms ease,
+				transform 160ms ease;
+		}
+
+		li a:hover {
+			transform: translateY(-2px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		li a {
+			transition: none;
+		}
+
+		li a:hover {
+			transform: none;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.explore {
+			padding: 1.25rem;
+		}
+	}
+</style>
